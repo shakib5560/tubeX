@@ -4,6 +4,11 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import { fileURLToPath } from 'url';
+import connectDB from "./config/db.js";
+
+// constants
+import dotenv from 'dotenv';
+dotenv.config({ path: './.env' });
 
 // routes
 import indexRouter from './routes/index.js';
@@ -42,5 +47,8 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500);
   res.render('error');
 });
+
+connectDB();
+
 
 export default app;
