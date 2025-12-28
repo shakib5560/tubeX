@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import { fileURLToPath } from 'url';
 import connectDB from "./config/db.js";
+import cors from "cors";
 
 // constants
 import dotenv from 'dotenv';
@@ -18,17 +19,27 @@ import usersRouter from './routes/users.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
+const app = express(
+    {limit: process.env.LIMIT}
+);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
+// middleware
+app.use(cors(
+    {
+        origin: process.env.CLIENT_URL,
+        credentials: true
+    }
+));
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: process.env.LIMIT }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
 
 // routes
 app.use('/', indexRouter);
@@ -48,7 +59,19 @@ app.use((err, req, res, next) => {
   res.render('error');
 });
 
-connectDB();
+const startServer = async () => {
+  try {
+    await connectDB(); // wait for DB connection
 
+    // app.listen(process.env.PORT || 3000, () => {
+    //   console.log(`🚀 Server running on port ${process.env.PORT || 3000}`);
+    // });
 
+  } catch (error) {
+    console.error("❌ DB connection failed", error);
+    process.exit(1); // stop the app if DB fails
+  }
+};
+
+startServer();
 export default app;

@@ -96,6 +96,14 @@ tubex/
 - **Authentication**: JWT (JSON Web Tokens)
 - **Environment Management**: dotenv
 
+## Using Middleware
+
+1. dotenv
+2. cookie-parser
+3. express
+4. cors
+5. 
+
 ## Contributing
 
 1. Fork the repository
@@ -103,6 +111,7 @@ tubex/
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
 
 ## License
 
