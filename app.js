@@ -1,3 +1,7 @@
+// constants
+import dotenv from 'dotenv';
+dotenv.config({ path: './.env' });
+
 import createError from 'http-errors';
 import express from 'express';
 import path from 'path';
@@ -6,20 +10,15 @@ import logger from 'morgan';
 import { fileURLToPath } from 'url';
 import connectDB from "./config/db.js";
 import cors from "cors";
+import {connectCloudinary} from "./config/cloudinary.service.js";
 
-
-// constants
-import dotenv from 'dotenv';
-dotenv.config({ path: './.env' });
 
 
 // __dirname fix (ESM এ নেই)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express(
-    {limit: process.env.LIMIT}
-);
+const app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -43,7 +42,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // home route
 app.get("/", (req, res) => {
-    res.sendFile(path.resolve("public/index.html"));
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+
 });
 // users route
 import usersRoutes from "./routes/users.routes.js";
@@ -57,17 +57,16 @@ app.use((req, res, next) => {
 
 // error handler
 app.use((err, req, res, next) => {
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  res.status(err.status || 500);
-  res.render('error');
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || "Internal Server Error",
+    });
 });
+
 
 const startServer = async () => {
   try {
     await connectDB(); // wait for DB connection
-
     // app.listen(process.env.PORT || 3000, () => {
     //   console.log(`🚀 Server running on port ${process.env.PORT || 3000}`);
     // });
@@ -77,6 +76,19 @@ const startServer = async () => {
     process.exit(1); // stop the app if DB fails
   }
 };
-
 startServer();
+
+const startCloudinary = async () => {
+    try {
+        const token = await connectCloudinary();
+        if (token) {
+            console.log("☁️ Cloudinary connected");
+        }
+    } catch (error) {
+        console.error("⚠️ Cloudinary connection failed", error);
+    }
+};
+
+startCloudinary()
 export default app;
+

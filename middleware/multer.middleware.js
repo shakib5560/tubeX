@@ -13,3 +13,5 @@ const storage = multer.diskStorage({
 });
 
 export const upload = multer({ storage });
+
+// Need to import on routes

@@ -21,6 +21,7 @@ const connectCloudinary = () => {
     console.log("✅ Cloudinary connected successfully");
 };
 
+
 const uploadOn = async (filePath) => {
     try {
         if (!filePath) return null;
