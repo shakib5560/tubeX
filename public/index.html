@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>API Docs</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<div class="max-w-5xl mx-auto px-6 py-12">
+
+    <!-- Page Title -->
+    <header class="mb-12">
+        <h1 class="text-5xl font-extrabold tracking-tight">
+            API Documentation
+        </h1>
+        <p class="text-slate-400 mt-3">
+            Base URL: <span class="text-indigo-400">https://api.example.com</span>
+        </p>
+    </header>
+
+    <!-- ================= USERS ================= -->
+    <section class="mb-14">
+        <h2 class="text-3xl font-bold mb-6 border-b border-slate-800 pb-3">
+            Users
+        </h2>
+
+        <!-- Endpoint Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg">
+
+            <!-- Method + Endpoint -->
+            <div class="flex items-center gap-4 mb-4">
+          <span class="px-3 py-1 text-sm font-semibold rounded-lg bg-green-500/20 text-green-400">
+            GET
+          </span>
+                <code class="text-lg text-indigo-400">
+                    /api/v1.0/users
+                </code>
+            </div>
+
+            <p class="text-slate-400 mb-5">
+                Fetch all registered users.
+            </p>
+
+            <!-- Status -->
+            <div class="mb-3">
+                <span class="text-sm text-slate-400">Status</span>
+                <span class="ml-2 px-2 py-1 text-xs rounded bg-emerald-500/20 text-emerald-400">
+            200 OK
+          </span>
+            </div>
+
+            <!-- Response -->
+            <div>
+                <p class="text-sm text-slate-400 mb-2">Response</p>
+                <pre class="bg-black/60 border border-slate-800 rounded-xl p-4 text-sm text-green-300 overflow-x-auto">
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Shakib",
+      "email": "shakib@example.com"
+    }
+  ]
+}
+          </pre>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ================= AUTH ================= -->
+    <section class="mb-14">
+        <h2 class="text-3xl font-bold mb-6 border-b border-slate-800 pb-3">
+            Register
+        </h2>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg">
+
+            <div class="flex items-center gap-4 mb-4">
+          <span class="px-3 py-1 text-sm font-semibold rounded-lg bg-blue-500/20 text-blue-400">
+            POST
+          </span>
+                <code class="text-lg text-indigo-400">
+                    /api/v1.0/auth/register
+                </code>
+            </div>
+
+            <p class="text-slate-400 mb-5">
+                Authenticate user create register.
+            </p>
+
+            <div class="mb-3">
+                <span class="text-sm text-slate-400">Status</span>
+                <span class="ml-2 px-2 py-1 text-xs rounded bg-emerald-500/20 text-emerald-400">
+            200 OK
+          </span>
+            </div>
+
+            <pre class="bg-black/60 border border-slate-800 rounded-xl p-4 text-sm text-blue-300 overflow-x-auto">
+{
+  "success": true,
+  "username": "shakib",
+  "email": "user@email.com"
+  "password": "password"
+}
+        </pre>
+
+        </div>
+    </section>
+
+    <!-- ================= AUTH ================= -->
+    <section class="mb-14">
+        <h2 class="text-3xl font-bold mb-6 border-b border-slate-800 pb-3">
+            Login
+        </h2>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg">
+
+            <div class="flex items-center gap-4 mb-4">
+          <span class="px-3 py-1 text-sm font-semibold rounded-lg bg-blue-500/20 text-blue-400">
+            POST
+          </span>
+                <code class="text-lg text-indigo-400">
+                    /api/v1.0/auth/login
+                </code>
+            </div>
+
+            <p class="text-slate-400 mb-5">
+                Authenticate user and return access token.
+            </p>
+
+            <div class="mb-3">
+                <span class="text-sm text-slate-400">Status</span>
+                <span class="ml-2 px-2 py-1 text-xs rounded bg-emerald-500/20 text-emerald-400">
+            200 OK
+          </span>
+            </div>
+
+            <pre class="bg-black/60 border border-slate-800 rounded-xl p-4 text-sm text-blue-300 overflow-x-auto">
+{
+  "success": true,
+  "token": "jwt_access_token_here"
+}
+        </pre>
+
+        </div>
+    </section>
+
+    <!-- ================= BLOG ================= -->
+    <section>
+        <h2 class="text-3xl font-bold mb-6 border-b border-slate-800 pb-3">
+            Blog
+        </h2>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg">
+
+            <div class="flex items-center gap-4 mb-4">
+          <span class="px-3 py-1 text-sm font-semibold rounded-lg bg-purple-500/20 text-purple-400">
+            GET
+          </span>
+                <code class="text-lg text-indigo-400">
+                    /api/v1.0/blogs
+                </code>
+            </div>
+
+            <p class="text-slate-400 mb-5">
+                Retrieve all published blog posts.
+            </p>
+
+            <div class="mb-3">
+                <span class="text-sm text-slate-400">Status</span>
+                <span class="ml-2 px-2 py-1 text-xs rounded bg-emerald-500/20 text-emerald-400">
+            200 OK
+          </span>
+            </div>
+
+            <pre class="bg-black/60 border border-slate-800 rounded-xl p-4 text-sm text-purple-300 overflow-x-auto">
+{
+  "success": true,
+  "blogs": [
+    {
+      "id": 12,
+      "title": "API Design Best Practices",
+      "author": "Shakib"
+    }
+  ]
+}
+        </pre>
+
+        </div>
+    </section>
+
+</div>
+
+</body>
+
+
+</html>

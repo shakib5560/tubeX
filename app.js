@@ -7,13 +7,11 @@ import { fileURLToPath } from 'url';
 import connectDB from "./config/db.js";
 import cors from "cors";
 
+
 // constants
 import dotenv from 'dotenv';
 dotenv.config({ path: './.env' });
 
-// routes
-import indexRouter from './routes/index.js';
-import usersRouter from './routes/users.js';
 
 // __dirname fix (ESM এ নেই)
 const __filename = fileURLToPath(import.meta.url);
@@ -42,8 +40,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 // routes
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+
+// home route
+app.get("/", (req, res) => {
+    res.sendFile(path.resolve("public/index.html"));
+});
+// users route
+import usersRoutes from "./routes/users.routes.js";
+app.use('/api/v1.0/auth', usersRoutes);
+
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
