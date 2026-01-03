@@ -31,8 +31,8 @@ const uploadOn = async (filePath) => {
             folder: "public",
         });
 
-        console.log("File uploaded successfully:", response.secure_url);
-        return response.secure_url;
+        console.log("File uploaded successfully:", response.url);
+        return response;
 
     } catch (error) {
         if (fs.existsSync(filePath)) {
