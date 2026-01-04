@@ -3,9 +3,11 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import {uploadOn} from "../config/cloudinary.service.js";
 import { processImage } from "../utils/imageProcessor.js";
+import fs from "fs";
 import path from "path";
+import ApiResponse from "../utils/ApiResponse.js";
 
-const DEFAULT_COVER = "/images/cover.webp";
+const DEFAULT_COVER = "public/images/cover.webp";
 
 const registerUser = asyncHandler(async (req, res) => {
     const { email, password, username, fullName } = req.body;
@@ -18,20 +20,32 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // Email validation
-    if (!email.includes("@")) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
         throw new ApiError(400, "Invalid email address");
     }
 
+
     // Check existing user
+    const normalizedUsername = username.toLowerCase();
+
     const userExist = await User.findOne({
-        $or: [{ email }, { username }],
+        $or: [{ email }, { username: normalizedUsername }],
     });
+
 
     if (userExist) {
         throw new ApiError(409, "User already exists");
     }
 
     // Images handling
+
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+
+    if (req.files.avatar[0].size > MAX_SIZE) {
+        throw new ApiError(400, "Avatar too large");
+    }
+
     const userAvatarLocal = req.files?.avatar?.[0]?.path;
     const userCoverLocal = req.files?.coverImage?.[0]?.path;
 
@@ -62,6 +76,8 @@ const registerUser = asyncHandler(async (req, res) => {
 // Upload avatar
     const upAvatar = await uploadOn(avatarWebpPath);
     if (!upAvatar?.url) {
+        fs.unlinkSync(avatarWebpPath);
+        fs.unlinkSync(userAvatarLocal);
         throw new ApiError(500, "Avatar upload failed");
     } else {
         console.log(upAvatar.url);
@@ -83,19 +99,32 @@ const registerUser = asyncHandler(async (req, res) => {
         const uploadedCover = await uploadOn(coverWebpPath);
         if (uploadedCover?.url) {
             coverUrl = uploadedCover.url;
+            fs.unlinkSync(avatarWebpPath);
+            fs.unlinkSync(userAvatarLocal);
         }
     }
 
-    const allDone =await User.create({
+    const user =await User.create({
         fullName,
         avatar: upAvatar.url,
         coverImage: coverUrl,
         email,
-        username: username.toLowerCase(),
+        username: normalizedUsername,
         password,
     })
 
-    const userFind = await User.findByID(allDone._id)
+    const userFind = await User.findById(user._id).select(
+        "-password -refreshToken", //syntax
+    )
+
+    if (!userFind) {
+        throw new ApiError(403, "User not found");
+    }
+
+    return res.status(201).json(
+        new ApiResponse(201, userFind, "User registered")
+    );
+
 
 });
 
