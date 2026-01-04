@@ -113,27 +113,30 @@ const registerUser = asyncHandler(async (req, res) => {
     if (req.files?.coverImage?.[0]) {
         const coverFile = req.files.coverImage[0];
 
-        // MIME type validation for cover image
         if (!allowedMimeTypes.includes(coverFile.mimetype)) {
             throw new ApiError(400, "Invalid format for user cover image");
         }
 
-        // Convert cover image to webp (no resize needed)
         const coverWebpPath = await processImage({
             inputPath: coverFile.path,
         });
 
-        // Upload cover image
-        const uploadedCover = await uploadOn(coverWebpPath);
-
-        // Clean up cover temp files
-        fs.unlinkSync(coverWebpPath);
-        fs.unlinkSync(coverFile.path);
+        let uploadedCover;
+        try {
+            uploadedCover = await uploadOn(coverWebpPath);
+        } finally {
+            // ✅ SAFE CLEANUP (no crash if missing)
+            await Promise.allSettled([
+                fs.promises.unlink(coverWebpPath),
+                fs.promises.unlink(coverFile.path),
+            ]);
+        }
 
         if (uploadedCover?.url) {
             coverUrl = uploadedCover.url;
         }
     }
+
 
     /* ----------------------------------------------------
        12. Create user in database

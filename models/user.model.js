@@ -66,12 +66,18 @@ const UserSchema = new mongoose.Schema(
 /* =========================
    Password Hash Middleware
 ========================= */
-UserSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+// UserSchema.pre("save", async function (next) {
+//     if (!this.isModified("password")) return next();
+//
+//     this.password = await bcrypt.hash(this.password, 12);
+//     return next();
+// });
+UserSchema.pre("save", async function () {
+    if (!this.isModified("password")) return;
 
-    this.password = await bcrypt.hash(this.password, 12);
-    return next();
+    this.password = await bcrypt.hash(this.password, 10);
 });
+
 
 /* =========================
    Instance Methods
