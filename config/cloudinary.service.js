@@ -28,11 +28,15 @@ const uploadOn = async (filePath) => {
 
         const response = await v2.uploader.upload(filePath, {
             resource_type: "auto",
-            folder: "public",
+            folder: "users",
         });
 
-        console.log("File uploaded successfully:", response.url);
-        return response;
+        fs.unlinkSync(filePath);
+
+        return {
+            url: response.secure_url,
+            publicId: response.public_id,
+        };
 
     } catch (error) {
         if (fs.existsSync(filePath)) {
@@ -42,4 +46,14 @@ const uploadOn = async (filePath) => {
     }
 };
 
-export { v2 as cloudinary, connectCloudinary, uploadOn };
+
+const deleteFromCloudinary = async (publicId) => {
+    if (!publicId) return;
+
+    await v2.uploader.destroy(publicId, {
+        resource_type: "image",
+    });
+};
+
+export { v2 as cloudinary, connectCloudinary, uploadOn, deleteFromCloudinary };
+

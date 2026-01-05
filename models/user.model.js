@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import {deleteFromCloudinary} from "../config/cloudinary.service.js";
 
 const UserSchema = new mongoose.Schema(
     {
@@ -46,13 +47,23 @@ const UserSchema = new mongoose.Schema(
         },
 
         coverImage: {
-            type: String,
-            default: "",
+            url: {
+                type: String,
+            },
+            publicId: {
+                type: String,
+            },
         },
 
         avatar: {
-            type: String,
-            default: "",
+            url: {
+                type: String,
+                required: true,
+            },
+            publicId: {
+                type: String,
+                required: true,
+            },
         },
 
         refreshToken: {
@@ -120,5 +131,15 @@ UserSchema.methods.generateRefreshToken = function () {
 
     return refreshToken;
 };
+
+UserSchema.post("findOneAndDelete", async function (doc) {
+    if (!doc) return;
+
+    await Promise.allSettled([
+        deleteFromCloudinary(doc.avatar?.publicId),
+        deleteFromCloudinary(doc.coverImage?.publicId),
+    ]);
+});
+
 
 export const User = mongoose.model("User", UserSchema);

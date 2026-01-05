@@ -108,7 +108,7 @@ const registerUser = asyncHandler(async (req, res) => {
     /* ----------------------------------------------------
        11. Handle optional cover image
     ---------------------------------------------------- */
-    let coverUrl = DEFAULT_COVER;
+    let uploadedCover = null;
 
     if (req.files?.coverImage?.[0]) {
         const coverFile = req.files.coverImage[0];
@@ -117,39 +117,44 @@ const registerUser = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Invalid format for user cover image");
         }
 
-        const coverWebpPath = await processImage({
-            inputPath: coverFile.path,
-        });
+        const coverWebpPath = await processImage({ inputPath: coverFile.path });
 
-        let uploadedCover;
         try {
             uploadedCover = await uploadOn(coverWebpPath);
         } finally {
-            // ✅ SAFE CLEANUP (no crash if missing)
             await Promise.allSettled([
                 fs.promises.unlink(coverWebpPath),
                 fs.promises.unlink(coverFile.path),
             ]);
         }
-
-        if (uploadedCover?.url) {
-            coverUrl = uploadedCover.url;
-        }
     }
+
 
 
     /* ----------------------------------------------------
        12. Create user in database
        (password hashing should happen in user model pre-save hook)
     ---------------------------------------------------- */
+
     const user = await User.create({
         fullName,
         email,
         username: normalizedUsername,
         password,
-        avatar: uploadedAvatar.url,
-        coverImage: coverUrl,
+
+        avatar: {
+            url: uploadedAvatar.url,
+            publicId: uploadedAvatar.publicId,
+        },
+
+        coverImage: uploadedCover
+            ? {
+                url: uploadedCover.url,
+                publicId: uploadedCover.publicId,
+            }
+            : undefined,
     });
+
 
     /* ----------------------------------------------------
        13. Fetch user without sensitive fields
