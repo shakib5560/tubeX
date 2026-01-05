@@ -52,9 +52,22 @@ DELETE /api/videos/:id      # Delete video
 
 3. Create a `.env` file in the root directory and add your environment variables:
    ```
-   DB_URL=mongodb://localhost:27017
-   PORT=3000
-   JWT_SECRET=your_jwt_secret
+
+   PORT=8000
+   DB_URL=mongodb+srv://tubeX:<DB_PASSWORD>@tubex.bhmza1s.mongodb.net/
+   CLIENT_URL=http://localhost:3000
+   LIMIT=16kb
+   JWT_SECRET=snl
+   ACCESS_TOKEN_EXPIRY=1d
+   REFRESH_TOKEN_SECRET=snl2
+   REFRESH_TOKEN_EXPIRY=7d
+
+
+   CLOUD_NAME=dlxyiewtr
+   API_KEY=*****
+   API_SECRET=****
+   API_ENV_VER=CLOUDINARY_URL=cloudinary://*****5698221946:******@dlxyiewtr
+   
    # Add other environment variables as needed
    ```
 
@@ -102,7 +115,7 @@ tubex/
 2. cookie-parser
 3. express
 4. cors
-5. 
+5. multer
 
 ## Contributing
 
