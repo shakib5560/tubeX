@@ -23,13 +23,7 @@ router.route("/register")
         ),
         registerUser);
 
-router.route("/login")
-    .get((req, res) => {
-        res.json({ message: "GET login working" });
-    })
-    .post(
-        loginUser,
-    )
+router.post("/login", loginUser);
 
 //secured routes
 router.route("/logout").post(verifyToken, logoutUser);

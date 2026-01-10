@@ -1,37 +1,59 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { User } from "../models/user.model.js";
-import { uploadOn } from "../config/cloudinary.service.js";
-import { processImage } from "../utils/imageProcessor.js";
-import fs from "fs";
-import ApiResponse from "../utils/ApiResponse.js";
-import {genAccessAndRefreshTokens} from "../utils/jwtConfig.js";
+/* =========================================================
+   IMPORTS & DEPENDENCIES
+========================================================= */
 
-/**
- * Default cover image
- * Should ideally be a Cloudinary URL or a publicly served static file
- */
+// Wraps async controllers to handle errors centrally
+import { asyncHandler } from "../utils/asyncHandler.js";
+
+// Custom error class for consistent API errors
+import { ApiError } from "../utils/ApiError.js";
+
+// User Mongoose model
+import { User } from "../models/user.model.js";
+
+// Upload helper for Cloudinary
+import { uploadOn } from "../config/cloudinary.service.js";
+
+// Image processing utility (resize, convert to webp)
+import { processImage } from "../utils/imageProcessor.js";
+
+// Node file system (used to delete temp files)
+import fs from "fs";
+
+// Standardized API success response
+import ApiResponse from "../utils/ApiResponse.js";
+
+// JWT access & refresh token generator
+import { genAccessAndRefreshTokens } from "../utils/jwtConfig.js";
+
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
+// Default cover image (used if user does not upload one)
 const DEFAULT_COVER = "public/images/cover.webp";
 
-/**
- * User Registration Controller
- */
+/* =========================================================
+   USER REGISTRATION CONTROLLER
+========================================================= */
+
 const registerUser = asyncHandler(async (req, res) => {
 
     /* ----------------------------------------------------
-       1. Extract required fields from request body
+       STEP 1: Extract required fields from request body
     ---------------------------------------------------- */
     const { email, password, username, fullName } = req.body;
 
     /* ----------------------------------------------------
-       2. Basic empty field validation
+       STEP 2: Validate empty fields
+       - Ensures no required field is missing or empty
     ---------------------------------------------------- */
     if ([fullName, email, username, password].some(v => !v || v.trim() === "")) {
         throw new ApiError(400, "All fields are required");
     }
 
     /* ----------------------------------------------------
-       3. Email format validation
+       STEP 3: Validate email format
     ---------------------------------------------------- */
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -39,12 +61,14 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     /* ----------------------------------------------------
-       4. Normalize username (case-insensitive uniqueness)
+       STEP 4: Normalize username
+       - Makes username case-insensitive
     ---------------------------------------------------- */
     const normalizedUsername = username.toLowerCase();
 
     /* ----------------------------------------------------
-       5. Check if user already exists
+       STEP 5: Check if user already exists
+       - Prevents duplicate email or username
     ---------------------------------------------------- */
     const userExist = await User.findOne({
         $or: [{ email }, { username: normalizedUsername }],
@@ -55,7 +79,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     /* ----------------------------------------------------
-       6. Avatar validation (required)
+       STEP 6: Validate avatar upload (REQUIRED)
     ---------------------------------------------------- */
     if (!req.files?.avatar?.[0]) {
         throw new ApiError(400, "Avatar is required");
@@ -64,24 +88,25 @@ const registerUser = asyncHandler(async (req, res) => {
     const avatarFile = req.files.avatar[0];
 
     /* ----------------------------------------------------
-       7. File size validation (2MB max)
+       STEP 7: Validate avatar file size (Max 2MB)
     ---------------------------------------------------- */
-    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    const MAX_SIZE = 2 * 1024 * 1024;
     if (avatarFile.size > MAX_SIZE) {
         throw new ApiError(400, "Avatar too large");
     }
 
     /* ----------------------------------------------------
-       8. MIME type validation
+       STEP 8: Validate avatar MIME type
     ---------------------------------------------------- */
     const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
-
     if (!allowedMimeTypes.includes(avatarFile.mimetype)) {
         throw new ApiError(400, "Invalid format for user avatar");
     }
 
     /* ----------------------------------------------------
-       9. Process avatar image (resize + convert to webp)
+       STEP 9: Process avatar image
+       - Resize to 256x256
+       - Convert to webp for optimization
     ---------------------------------------------------- */
     const avatarWebpPath = await processImage({
         inputPath: avatarFile.path,
@@ -90,7 +115,8 @@ const registerUser = asyncHandler(async (req, res) => {
     });
 
     /* ----------------------------------------------------
-       10. Upload avatar to Cloudinary
+       STEP 10: Upload avatar to Cloudinary
+       - Delete local temp files after upload
     ---------------------------------------------------- */
     let uploadedAvatar;
     try {
@@ -107,7 +133,7 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     /* ----------------------------------------------------
-       11. Handle optional cover image
+       STEP 11: Handle optional cover image upload
     ---------------------------------------------------- */
     let uploadedCover = null;
 
@@ -130,24 +156,19 @@ const registerUser = asyncHandler(async (req, res) => {
         }
     }
 
-
-
     /* ----------------------------------------------------
-       12. Create user in database
-       (password hashing should happen in user model pre-save hook)
+       STEP 12: Create user in database
+       - Password hashing occurs in model pre-save hook
     ---------------------------------------------------- */
-
     const user = await User.create({
         fullName,
         email,
         username: normalizedUsername,
         password,
-
         avatar: {
             url: uploadedAvatar.url,
             publicId: uploadedAvatar.publicId,
         },
-
         coverImage: uploadedCover
             ? {
                 url: uploadedCover.url,
@@ -156,9 +177,8 @@ const registerUser = asyncHandler(async (req, res) => {
             : undefined,
     });
 
-
     /* ----------------------------------------------------
-       13. Fetch user without sensitive fields
+       STEP 13: Fetch user without sensitive fields
     ---------------------------------------------------- */
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
@@ -169,95 +189,113 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     /* ----------------------------------------------------
-       14. Send success response (DONE)
+       STEP 14: Send success response
     ---------------------------------------------------- */
     return res.status(201).json(
         new ApiResponse(201, createdUser, "User registered successfully")
     );
 });
 
-/**
- * User Login Controller
- */
+/* =========================================================
+   USER LOGIN CONTROLLER
+========================================================= */
+
 const loginUser = asyncHandler(async (req, res) => {
-    // password match according to the username/email
-    // find the user
-    // access and refresh token
-    //send cookie
 
-    /* -- get data from frontend request body -- */
+    /* ----------------------------------------------------
+       STEP 1: Extract login credentials
+    ---------------------------------------------------- */
     const { email, username, password } = req.body;
-    if (!email && !username ) {
-        throw new ApiError(400, "username or email is required")
-    }
-    if (!password) {
-        throw new ApiError(400, "Password is required")
+
+    if (!email && !username) {
+        throw new ApiError(400, "username or email is required");
     }
 
-    /* -- try to match from DB and check exiting  -- */
-    const userFind = await User.findOne({  // Search data in side databased
+    if (!password) {
+        throw new ApiError(400, "Password is required");
+    }
+
+    /* ----------------------------------------------------
+       STEP 2: Find user by email or username
+    ---------------------------------------------------- */
+    const userFind = await User.findOne({
         $or: [{ email }, { username }],
-    })
+    }).select("+password");
+
     if (!userFind) {
         throw new ApiError(401, "Invalid credentials");
     }
 
-    /* -- check password valid or not (using bcrypt) -- */
-    const  isPasswordValid = await userFind.isPasswordCorrect(password)
-    if(!isPasswordValid) {
+    /* ----------------------------------------------------
+       STEP 3: Verify password
+    ---------------------------------------------------- */
+    const isPasswordValid = await userFind.isPasswordCorrect(password);
+    if (!isPasswordValid) {
         throw new ApiError(401, "Invalid password");
     }
 
-    /* generate accessToken & refreshToken */
-    const {accessToken, refreshToken} = await genAccessAndRefreshTokens(userFind?._id);
+    /* ----------------------------------------------------
+       STEP 4: Generate JWT tokens
+    ---------------------------------------------------- */
+    const { accessToken, refreshToken } =
+        await genAccessAndRefreshTokens(userFind._id);
 
-    const  loggedInUser = await User.findById(userFind?._id).
-    select("-password -refreshToken"); // find user according to the id, ignore filed because don't wanna send password inside cookies
+    /* ----------------------------------------------------
+       STEP 5: Fetch user without sensitive fields
+    ---------------------------------------------------- */
+    const loggedInUser = await User.findById(userFind._id)
+        .select("-password -refreshToken");
 
-    /* -- Sending cookies -- */
+    /* ----------------------------------------------------
+       STEP 6: Send tokens via HTTP-only cookies
+    ---------------------------------------------------- */
     const options = {
         httpOnly: true,
         secure: true,
         sameSite: "strict",
-    }
-
+    };
 
     return res
         .status(200)
-        .cookies("accessToken", accessToken, options)
-        .cookies("refreshToken", refreshToken, options )
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
         .json(
-            new ApiResponse(200, {
-                user: loggedInUser,
-                accessToken,
-                refreshToken
-            },
-                "User logged in successfully")
-        )
-})
+            new ApiResponse(
+                200,
+                { user: loggedInUser, accessToken, refreshToken },
+                "User logged in successfully"
+            )
+        );
+});
 
-/**
- * User Logout Controller
- */
+/* =========================================================
+   USER LOGOUT CONTROLLER
+========================================================= */
+
 const logoutUser = asyncHandler(async (req, res) => {
+
+    /* ----------------------------------------------------
+       STEP 1: Verify authenticated user
+    ---------------------------------------------------- */
     if (!req.user?._id) {
         throw new ApiError(401, "Unauthorized request");
     }
 
-    await User.findByIdAndUpdate(
-        req.user._id,
-        {
-            $unset: {
-                refreshToken: 1,
-            },
-        }
-    );
+    /* ----------------------------------------------------
+       STEP 2: Remove refresh token from database
+    ---------------------------------------------------- */
+    await User.findByIdAndUpdate(req.user._id, {
+        $unset: { refreshToken: 1 },
+    });
 
+    /* ----------------------------------------------------
+       STEP 3: Clear authentication cookies
+    ---------------------------------------------------- */
     const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "None", // MUST match login cookie
-        path: "/",        // MUST match login cookie
+        sameSite: "None",
+        path: "/",
     };
 
     return res
@@ -268,5 +306,9 @@ const logoutUser = asyncHandler(async (req, res) => {
             new ApiResponse(200, {}, "User logged out successfully")
         );
 });
+
+/* =========================================================
+   EXPORT CONTROLLERS
+========================================================= */
 
 export { registerUser, loginUser, logoutUser };

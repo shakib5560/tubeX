@@ -33,7 +33,7 @@ app.use(cors(
 ));
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false, limit: process.env.LIMIT }));
+app.use(express.urlencoded({ extended: true, limit: process.env.LIMIT }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 

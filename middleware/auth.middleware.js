@@ -6,7 +6,7 @@ import {User} from "../models/user.model.js";
 // verifyToken middleware
 // Purpose: Protect routes by verifying JWT access token
 
-export const verifyToken = asyncHandler(async (req, res, next) => {
+export const verifyToken = asyncHandler(async (req, _, next) => {
 
     try {
         // 1️⃣ Extract access token
