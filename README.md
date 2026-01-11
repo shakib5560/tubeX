@@ -88,6 +88,35 @@ GET /api/v1/videos?page=1&limit=10&sort=views
 | sort  | views / latest  |
 
 
+### ⚙️ Environment Variables
+Create a .env file in the root directory:
+
+```
+PORT=3000
+DB_URL=mongodb+srv://tubeX:<PASSWORD>@tubex.mongodb.net/
+
+CLIENT_URL=http://localhost:3000
+
+JWT_SECRET=your_access_secret
+ACCESS_TOKEN_EXPIRY=1d
+
+REFRESH_TOKEN_SECRET=your_refresh_secret
+REFRESH_TOKEN_EXPIRY=7d
+
+CLOUD_NAME=cloudinary_name
+API_KEY=cloudinary_key
+API_SECRET=cloudinary_secret
+
+```
+
+git clone https://github.com/yourusername/tubex.git
+cd tubex
+
+| Command     | Description                |
+| ----------- | -------------------------- |
+| npm run dev | Development mode (nodemon) |
+| npm start   | Production mode            |
+| npm test    | Run tests                  |
 
 
 
