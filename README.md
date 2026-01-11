@@ -17,6 +17,7 @@ An open-source backend REST API for a video sharing platform, built with Node.js
 ```http
 POST /api/auth/register
 POST /api/auth/login
+POST /api/auth/logout
 ```
 
 ### Videos
@@ -45,15 +46,13 @@ DELETE /api/videos/:id      # Delete video
 
 2. Install dependencies:
    ```bash
-   npm install
-   # or
-   yarn install
+   npm install 
    ```
 
 3. Create a `.env` file in the root directory and add your environment variables:
    ```
 
-   PORT=8000
+   PORT=3000
    DB_URL=mongodb+srv://tubeX:<DB_PASSWORD>@tubex.bhmza1s.mongodb.net/
    CLIENT_URL=http://localhost:3000
    LIMIT=16kb

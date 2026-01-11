@@ -26,6 +26,9 @@ import ApiResponse from "../utils/ApiResponse.js";
 // JWT access & refresh token generator
 import { genAccessAndRefreshTokens } from "../utils/jwtConfig.js";
 
+// JWT token input
+import jwt from "jsonwebtoken";
+
 /* =========================================================
    CONSTANTS
 ========================================================= */
@@ -308,7 +311,75 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 /* =========================================================
+   USER RefreshAccessToken CONTROLLER
+========================================================= */
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    // 1️⃣ Get the refresh token from cookies or request body
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+    if (!incomingRefreshToken) {
+        // If no token found, return unauthorized
+        throw new ApiError(401, "Refresh token is required");
+    }
+
+    try {
+        // 2️⃣ Decode the token using jwt.verify instead of jwt.decode
+        // ⚠️ Important: jwt.decode DOES NOT verify the token signature, jwt.verify does
+        const decodedRefreshToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        );
+
+        // 3️⃣ Find the user by ID from decoded token
+        const findUser = await User.findById(decodedRefreshToken._id);
+
+        if (!findUser) {
+            throw new ApiError(401, "User not found for this token");
+        }
+
+        // 4️⃣ Compare incoming token with stored refreshToken in DB
+        if (incomingRefreshToken !== findUser.refreshToken) {
+            throw new ApiError(403, "Refresh token is invalid or expired");
+        }
+
+        // 5️⃣ Generate new access and refresh tokens
+        const { accessToken, newRefreshToken } = await genAccessAndRefreshTokens(findUser._id);
+
+        // 6️⃣ Update the user's refreshToken in DB
+        findUser.refreshToken = newRefreshToken;
+        await findUser.save();
+
+        // 7️⃣ Cookie options
+        const options = {
+            httpOnly: true,  // Prevents client-side JS access
+            secure: process.env.NODE_ENV === "production",  // Only send over HTTPS in production
+            sameSite: "strict",  // Helps prevent CSRF
+            maxAge: 7 * 24 * 60 * 60 * 1000 // Optional: 7 days
+        };
+
+        // 8️⃣ Send new tokens in HTTP-only cookies and response body
+        return res.status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .json(
+                new ApiResponse(200, { accessToken, refreshToken: newRefreshToken }, "Tokens refreshed successfully")
+            );
+    } catch (error) {
+        console.error(error);
+        // 9️⃣ Handle JWT errors specifically
+        if (error.name === "TokenExpiredError") {
+            throw new ApiError(403, "Refresh token has expired");
+        }
+        if (error.name === "JsonWebTokenError") {
+            throw new ApiError(401, "Invalid refresh token");
+        }
+        throw new ApiError(500, error.message || "Something went wrong while refreshing token");
+    }
+});
+
+/* =========================================================
    EXPORT CONTROLLERS
 ========================================================= */
 
-export { registerUser, loginUser, logoutUser };
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
