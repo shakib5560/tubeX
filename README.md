@@ -33,3 +33,20 @@ An open-source, scalable **REST API backend** for a video-sharing platform — i
 
 ## 📂 Project Structure
 
+
+tubex/
+├── src/
+│ ├── config/ # DB, cloudinary config
+│ ├── controllers/ # Route logic
+│ ├── middlewares/ # Auth, error handlers
+│ ├── models/ # Mongoose schemas
+│ ├── routes/ # API routes
+│ ├── utils/ # Helpers (JWT, asyncHandler)
+│ ├── app.js # Express app
+│ └── server.js # Server entry
+├── .env.example
+├── package.json
+└── README.md
+
+
+
