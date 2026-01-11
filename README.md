@@ -50,3 +50,17 @@ tubex/
 
 
 
+
+---
+
+## 🔗 API Endpoints (v1)
+
+### 🔐 Authentication
+
+```http
+POST   /api/v1/auth/register     # Register new user
+POST   /api/v1/auth/login        # Login user
+POST   /api/v1/auth/logout       # Logout user
+POST   /api/v1/auth/refresh      # Refresh access token
+GET    /api/v1/auth/me           # Get logged-in user
+
