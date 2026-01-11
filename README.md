@@ -33,6 +33,7 @@ An open-source, scalable **REST API backend** for a video-sharing platform — i
 
 ## 📂 Project Structure
 
+```
 
 tubex/
 ├── src/
@@ -48,7 +49,7 @@ tubex/
 ├── package.json
 └── README.md
 
-
+```
 
 
 ---
