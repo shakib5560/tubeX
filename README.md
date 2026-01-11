@@ -63,4 +63,31 @@ POST   /api/v1/auth/login        # Login user
 POST   /api/v1/auth/logout       # Logout user
 POST   /api/v1/auth/refresh      # Refresh access token
 GET    /api/v1/auth/me           # Get logged-in user
+```
+
+### 📹 Videos
+
+```http
+GET    /api/v1/videos            # Get all published videos (paginated)
+POST   /api/v1/videos            # Upload new video (auth required)
+GET    /api/v1/videos/:videoId   # Get single video
+PUT    /api/v1/videos/:videoId   # Update video (owner only)
+DELETE /api/v1/videos/:videoId   # Delete video (owner only)
+```
+
+### 📊 Query Parameters (Videos)
+
+```http
+GET /api/v1/videos?page=1&limit=10&sort=views
+```
+
+| Param | Description     |
+| ----- | --------------- |
+| page  | Page number     |
+| limit | Videos per page |
+| sort  | views / latest  |
+
+
+
+
 
