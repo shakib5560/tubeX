@@ -63,6 +63,12 @@ app.use((err, req, res, next) => {
     });
 });
 
+// config passport js
+import passport from "passport";
+import "./config/passport.js";
+
+app.use(passport.initialize());
+
 
 const startServer = async () => {
   try {

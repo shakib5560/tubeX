@@ -16,10 +16,12 @@ import {
     loginUser,
     logoutUser,
     refreshAccessToken,
+    googleAuthCallback,
+    changePasswordCallback
 } from "../controllers/user.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { verifyToken } from "../middleware/auth.middleware.js";
-
+import passport from "passport";
 const router = Router();
 
 /**
@@ -66,5 +68,25 @@ router.post("/logout", verifyToken, logoutUser);
  * @access  Public
  */
 router.post("/refresh-token", refreshAccessToken);
+
+// Step 1: Redirect to Google
+router.get(
+    "/google",
+    passport.authenticate("google", {
+        scope: ["profile", "email"],
+    })
+);
+
+// Step 2: Google callback
+router.get(
+    "/google/callback",
+    passport.authenticate("google", { session: false }),
+    googleAuthCallback
+);
+
+// change password
+
+
+
 
 export default router;

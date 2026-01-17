@@ -21,6 +21,16 @@ const UserSchema = new mongoose.Schema(
             index: true,
         },
 
+        googleId: {
+            type: String,
+            unique: true,
+            sparse: true
+        },
+        isGoogleAuth: {
+            type: Boolean,
+            default: false
+        },
+
         email: {
             type: String,
             required: [true, "Email is required"],

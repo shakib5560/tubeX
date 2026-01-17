@@ -1,6 +1,7 @@
 /* =========================================================
    IMPORTS & DEPENDENCIES
 ========================================================= */
+import { genAccessAndRefreshTokens } from "../utils/jwtConfig.js";
 
 // Wraps async controllers to handle errors centrally
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -24,10 +25,11 @@ import fs from "fs";
 import ApiResponse from "../utils/ApiResponse.js";
 
 // JWT access & refresh token generator
-import { genAccessAndRefreshTokens } from "../utils/jwtConfig.js";
+// import { genAccessAndRefreshTokens } from "../utils/jwtConfig.js";
 
 // JWT token input
 import jwt from "jsonwebtoken";
+import user from "debug";
 
 /* =========================================================
    CONSTANTS
@@ -379,7 +381,205 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 /* =========================================================
+   USER googleAuthCallback CONTROLLER
+========================================================= */
+
+const googleAuthCallback = asyncHandler(async (req, res) => {
+
+    const user = req.user;
+
+    // 1️⃣ Generate tokens
+    const { accessToken, newRefreshToken } =
+        await genAccessAndRefreshTokens(user._id);
+
+    // 2️⃣ Save refresh token
+    user.refreshToken = newRefreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    // 3️⃣ Cookie options
+    const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+    };
+
+    // 4️⃣ Send cookies & redirect frontend
+    res
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", newRefreshToken, options)
+        .redirect("http://localhost:3000"); // frontend URL
+})
+
+/* =========================================================
+   USER changeCurrentPassword CONTROLLER
+========================================================= */
+
+// Controller to handle user password change
+const changePasswordCallback = asyncHandler(async (req, res) => {
+
+    // 1️⃣ Extract old and new password from request body
+    const { oldPassword, newPassword, conformNewPassword} = req.body;
+
+    // 2️⃣ Validate required fields
+    // If either old or new password is missing, throw a bad request error
+    if (!oldPassword || !newPassword) {
+        throw new ApiError(400, "Old password and new password are required");
+    }
+
+    if (conformNewPassword !== newPassword) {
+        throw new ApiError(403, "ConformNewPassword is not correct");
+    }
+
+    // 3️⃣ Fetch the authenticated user from database using ID from token
+    const user = await User.findById(req.user._id);
+
+    // 4️⃣ If user does not exist, token is invalid or user was deleted
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    // 5️⃣ Verify that the provided old password matches the stored password
+    const isOldPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+    // 6️⃣ If old password does not match, deny the request
+    if (!isOldPasswordCorrect) {
+        throw new ApiError(401, "Old password is incorrect");
+    }
+
+    // 7️⃣ Validate new password strength (minimum length check)
+    if (newPassword.length < 8) {
+        throw new ApiError(400, "Password must be at least 8 characters long");
+    }
+
+
+
+    // 8️⃣ Assign the new password
+    // Password hashing will be handled automatically by Mongoose pre-save hook
+    user.password = newPassword;
+
+    // 9️⃣ Save the updated user document to the database
+    await user.save();
+
+    // 🔟 Send success response to client
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Password changed successfully")
+    );
+});
+
+/* =========================================================
+   USER getCurrentUser CONTROLLER
+========================================================= */
+
+const  getCurrentUser = asyncHandler(async (req, res) => {
+
+    return res
+    .status(200)
+        .json(200, req.user, "current user fetched successfully")
+
+})
+
+/* =========================================================
+   USER updateUsername CONTROLLER
+========================================================= */
+
+const userNameUpdate = asyncHandler(async (req, res) => {
+    const { password, username } = req.body;
+
+    if (!password || !username) {
+        throw new ApiError(400, "Password and username are required");
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if (!(await user.isPasswordCorrect(password))) {
+        throw new ApiError(401, "Invalid password");
+    }
+
+    if (user.username === username) {
+        throw new ApiError(400, "New username must be different");
+    }
+
+    const exists = await User.findOne({ username });
+    if (exists) {
+        throw new ApiError(409, "Username already taken");
+    }
+
+    user.username = username;
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+        new ApiResponse(200, { username: user.username }, "Username updated successfully")
+    );
+});
+
+/* =========================================================
+   USER updateEmail CONTROLLER
+========================================================= */
+
+const userEmailUpdate = asyncHandler(async (req, res) => {
+    const { password, email } = req.body;
+
+    if (!password || !email) {
+        throw new ApiError(400, "Password and email are required");
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if (!(await user.isPasswordCorrect(password))) {
+        throw new ApiError(401, "Invalid password");
+    }
+
+    if (user.email === email) {
+        throw new ApiError(400, "New email must be different");
+    }
+
+    const exists = await User.findOne({ email });
+    if (exists) {
+        throw new ApiError(409, "Email already in use");
+    }
+
+    user.email = email;
+    user.isEmailVerified = false; // recommended
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+        new ApiResponse(200, { email: user.email }, "Email updated successfully")
+    );
+});
+
+/* =========================================================
+   USER fullName CONTROLLER
+========================================================= */
+
+const fullNameUpdate = asyncHandler(async (req, res) => {
+    const {fullName} = req.body;
+    if (!fullName){
+        throw new ApiError(400, "Wrong full name");
+    }
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    user.fullName = fullName;
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { username: user.username },
+            "FullName updated successfully"
+        )
+    );
+})
+
+/* =========================================================
    EXPORT CONTROLLERS
 ========================================================= */
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+export { registerUser, loginUser, logoutUser, refreshAccessToken, googleAuthCallback, changePasswordCallback, getCurrentUser, userNameUpdate, userEmailUpdate, fullNameUpdate };

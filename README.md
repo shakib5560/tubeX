@@ -1,134 +1,123 @@
-# TubeX
+# 🎥 TubeX Backend API
 
-An open-source backend REST API for a video sharing platform, built with Node.js, Express, and MongoDB.
+An open-source, scalable **REST API backend** for a video-sharing platform — inspired by YouTube — built with **Node.js, Express, and MongoDB**.
 
-## Features
+> 🚀 Designed for performance, security, and real-world production use.
 
-- **Video Management**: Upload, view, and manage videos
-- **User Authentication**: Secure user registration and login system
-- **Modern Tech Stack**: Built with the latest JavaScript (ESM modules)
-- **Database**: MongoDB with Mongoose ODM
-- **Environment Configuration**: Easy configuration using environment variables
+---
 
-## API Endpoints
+## ✨ Features
 
-### Authentication
+- 🔐 **JWT Authentication** (Access & Refresh Tokens)
+- 📹 **Video Upload & Management**
+- 👤 **User Registration & Login**
+- ☁️ **Cloudinary Integration** for media storage
+- 📄 **Pagination & Aggregation Support**
+- 🌱 **Modern ESM-based Node.js architecture**
+- 🧩 Clean MVC folder structure
 
-```http
-POST /api/auth/register
-POST /api/auth/login
-POST /api/auth/logout
-```
+---
 
-### Videos
+## 🧠 Tech Stack
 
-```http
-GET    /api/videos          # Get all videos
-POST   /api/videos          # Upload a new video
-GET    /api/videos/:id      # Get video by ID
-PUT    /api/videos/:id      # Update video
-DELETE /api/videos/:id      # Delete video
-```
+| Layer        | Technology |
+|-------------|------------|
+| Backend     | Node.js, Express.js |
+| Database    | MongoDB + Mongoose |
+| Auth        | JWT, Cookies |
+| File Upload| Multer |
+| Media       | Cloudinary |
+| Config      | dotenv |
 
-## Prerequisites
+---
 
-- Node.js (v14 or higher)
-- MongoDB (local or remote instance)
-- npm or yarn
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/tubex.git
-   cd tubex
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install 
-   ```
-
-3. Create a `.env` file in the root directory and add your environment variables:
-   ```
-
-   PORT=3000
-   DB_URL=mongodb+srv://tubeX:<DB_PASSWORD>@tubex.bhmza1s.mongodb.net/
-   CLIENT_URL=http://localhost:3000
-   LIMIT=16kb
-   JWT_SECRET=snl
-   ACCESS_TOKEN_EXPIRY=1d
-   REFRESH_TOKEN_SECRET=snl2
-   REFRESH_TOKEN_EXPIRY=7d
-
-
-   CLOUD_NAME=dlxyiewtr
-   API_KEY=*****
-   API_SECRET=****
-   API_ENV_VER=CLOUDINARY_URL=cloudinary://*****5698221946:******@dlxyiewtr
-   
-   # Add other environment variables as needed
-   ```
-
-4. Start the development server:
-   ```bash
-   npm start
-   # or
-   yarn start
-   ```
-
-5. The API will be available at `http://localhost:3000`
-
-## Project Structure
+## 📂 Project Structure
 
 ```
+
 tubex/
-├── config/           # Configuration files
-│   └── db.js        # Database connection
-├── controllers/      # Request handlers
-├── middlewares/      # Custom middleware
-├── models/           # Database models
-├── routes/           # Route definitions
-├── utils/            # Utility functions
-├── app.js            # Main application file
-├── package.json      # Project dependencies
-└── .env              # Environment variables
+├── src/
+│ ├── config/ # DB, cloudinary config
+│ ├── controllers/ # Route logic
+│ ├── middlewares/ # Auth, error handlers
+│ ├── models/ # Mongoose schemas
+│ ├── routes/ # API routes
+│ ├── utils/ # Helpers (JWT, asyncHandler)
+│ ├── app.js # Express app
+│ └── server.js # Server entry
+├── .env.example
+├── package.json
+└── README.md
+
 ```
 
-## Available Scripts
 
-- `npm start`: Start the application in production mode
-- `npm run dev`: Start the application in development mode with nodemon
-- `npm test`: Run tests (if any)
+---
 
-## Technologies Used
+## 🔗 API Endpoints (v1)
 
-- **Backend**: Node.js, Express.js
-- **Database**: MongoDB with Mongoose
-- **Authentication**: JWT (JSON Web Tokens)
-- **Environment Management**: dotenv
+### 🔐 Authentication
 
-## Using Middleware
+```http
+POST   /api/v1/auth/register     # Register new user
+POST   /api/v1/auth/login        # Login user
+POST   /api/v1/auth/logout       # Logout user
+POST   /api/v1/auth/refresh      # Refresh access token
+GET    /api/v1/auth/me           # Get logged-in user
+```
 
-1. dotenv
-2. cookie-parser
-3. express
-4. cors
-5. multer
+### 📹 Videos
 
-## Contributing
+```http
+GET    /api/v1/videos            # Get all published videos (paginated)
+POST   /api/v1/videos            # Upload new video (auth required)
+GET    /api/v1/videos/:videoId   # Get single video
+PUT    /api/v1/videos/:videoId   # Update video (owner only)
+DELETE /api/v1/videos/:videoId   # Delete video (owner only)
+```
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### 📊 Query Parameters (Videos)
+
+```http
+GET /api/v1/videos?page=1&limit=10&sort=views
+```
+
+| Param | Description     |
+| ----- | --------------- |
+| page  | Page number     |
+| limit | Videos per page |
+| sort  | views / latest  |
 
 
-## License
+### ⚙️ Environment Variables
+Create a .env file in the root directory:
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+```
+PORT=3000
+DB_URL=mongodb+srv://tubeX:<PASSWORD>@tubex.mongodb.net/
 
-## Support
+CLIENT_URL=http://localhost:3000
 
-For support, please open an issue in the GitHub repository.
+JWT_SECRET=your_access_secret
+ACCESS_TOKEN_EXPIRY=1d
+
+REFRESH_TOKEN_SECRET=your_refresh_secret
+REFRESH_TOKEN_EXPIRY=7d
+
+CLOUD_NAME=cloudinary_name
+API_KEY=cloudinary_key
+API_SECRET=cloudinary_secret
+
+```
+
+git clone https://github.com/yourusername/tubex.git
+cd tubex
+
+| Command     | Description                |
+| ----------- | -------------------------- |
+| npm run dev | Development mode (nodemon) |
+| npm start   | Production mode            |
+| npm test    | Run tests                  |
+
+
+
