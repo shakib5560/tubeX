@@ -47,13 +47,20 @@ const uploadOn = async (filePath) => {
 };
 
 
-const deleteFromCloudinary = async (publicId) => {
-    if (!publicId) return;
+const deleteFromCloudinary = async (imageUrl) => {
+    if (!imageUrl) return;
+
+    const publicId = imageUrl
+        .split("/")
+        .slice(-2)
+        .join("/")
+        .split(".")[0];
 
     await v2.uploader.destroy(publicId, {
         resource_type: "image",
     });
 };
+
 
 export { v2 as cloudinary, connectCloudinary, uploadOn, deleteFromCloudinary };
 

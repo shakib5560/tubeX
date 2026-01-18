@@ -13,7 +13,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 
 // Upload helper for Cloudinary
-import { uploadOn } from "../config/cloudinary.service.js";
+import {deleteFromCloudinary, uploadOn} from "../config/cloudinary.service.js";
 
 // Image processing utility (resize, convert to webp)
 import { processImage } from "../utils/imageProcessor.js";
@@ -415,52 +415,51 @@ const googleAuthCallback = asyncHandler(async (req, res) => {
 ========================================================= */
 
 // Controller to handle user password change
-const changePasswordCallback = asyncHandler(async (req, res) => {
+const changePassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword, confirmNewPassword } = req.body;
 
-    // 1️⃣ Extract old and new password from request body
-    const { oldPassword, newPassword, conformNewPassword} = req.body;
-
-    // 2️⃣ Validate required fields
-    // If either old or new password is missing, throw a bad request error
-    if (!oldPassword || !newPassword) {
-        throw new ApiError(400, "Old password and new password are required");
+    // 1️⃣ Validate required fields
+    if (!oldPassword || !newPassword || !confirmNewPassword) {
+        throw new ApiError(400, "Old password, new password and confirmation are required");
     }
 
-    if (conformNewPassword !== newPassword) {
-        throw new ApiError(403, "ConformNewPassword is not correct");
+    // 2️⃣ Confirm new password match
+    if (newPassword !== confirmNewPassword) {
+        throw new ApiError(400, "New password and confirm password do not match");
     }
 
-    // 3️⃣ Fetch the authenticated user from database using ID from token
-    const user = await User.findById(req.user._id);
+    // 3️⃣ Prevent reusing same password
+    if (oldPassword === newPassword) {
+        throw new ApiError(400, "New password must be different from old password");
+    }
 
-    // 4️⃣ If user does not exist, token is invalid or user was deleted
+    // 4️⃣ Fetch user with password
+    const user = await User.findById(req.user._id).select("+password");
     if (!user) {
         throw new ApiError(404, "User not found");
     }
 
-    // 5️⃣ Verify that the provided old password matches the stored password
+    // 5️⃣ Verify old password
     const isOldPasswordCorrect = await user.isPasswordCorrect(oldPassword);
-
-    // 6️⃣ If old password does not match, deny the request
     if (!isOldPasswordCorrect) {
         throw new ApiError(401, "Old password is incorrect");
     }
 
-    // 7️⃣ Validate new password strength (minimum length check)
+    // 6️⃣ Validate password strength
     if (newPassword.length < 8) {
         throw new ApiError(400, "Password must be at least 8 characters long");
     }
 
+    // (Optional but recommended)
+    // Add regex check for strong passwords if needed
 
-
-    // 8️⃣ Assign the new password
-    // Password hashing will be handled automatically by Mongoose pre-save hook
+    // 7️⃣ Update password (hashing via pre-save hook)
     user.password = newPassword;
-
-    // 9️⃣ Save the updated user document to the database
     await user.save();
 
-    // 🔟 Send success response to client
+    // 8️⃣ Optional security hardening
+    // await invalidateUserSessions(user._id);
+
     return res.status(200).json(
         new ApiResponse(200, {}, "Password changed successfully")
     );
@@ -489,29 +488,52 @@ const userNameUpdate = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Password and username are required");
     }
 
-    const user = await User.findById(req.user._id);
+    // Optional: normalize username
+    const normalizedUsername = username.trim().toLowerCase();
+
+    // 1️⃣ Fetch user WITH password for verification
+    const user = await User.findById(req.user._id).select("+password");
     if (!user) {
         throw new ApiError(404, "User not found");
     }
 
-    if (!(await user.isPasswordCorrect(password))) {
+    // 2️⃣ Verify password
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
         throw new ApiError(401, "Invalid password");
     }
 
-    if (user.username === username) {
+    // 3️⃣ Prevent same username
+    if (user.username === normalizedUsername) {
         throw new ApiError(400, "New username must be different");
     }
 
-    const exists = await User.findOne({ username });
+    // 4️⃣ Check username uniqueness
+    const exists = await User.findOne({ username: normalizedUsername });
     if (exists) {
         throw new ApiError(409, "Username already taken");
     }
 
-    user.username = username;
-    await user.save({ validateBeforeSave: false });
+    // 5️⃣ Update username safely
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                username: normalizedUsername,
+            },
+        },
+        {
+            new: true,
+            runValidators: false, // ignore password validation
+        }
+    ).select("-password");
 
     return res.status(200).json(
-        new ApiResponse(200, { username: user.username }, "Username updated successfully")
+        new ApiResponse(
+            200,
+            { username: updatedUser.username },
+            "Username updated successfully"
+        )
     );
 });
 
@@ -526,30 +548,50 @@ const userEmailUpdate = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Password and email are required");
     }
 
-    const user = await User.findById(req.user._id);
+    // 1️⃣ Fetch user WITH password (needed for verification)
+    const user = await User.findById(req.user._id).select("+password");
     if (!user) {
         throw new ApiError(404, "User not found");
     }
 
-    if (!(await user.isPasswordCorrect(password))) {
+    // 2️⃣ Verify password
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
         throw new ApiError(401, "Invalid password");
     }
 
+    // 3️⃣ Prevent same email update
     if (user.email === email) {
         throw new ApiError(400, "New email must be different");
     }
 
-    const exists = await User.findOne({ email });
-    if (exists) {
+    // 4️⃣ Check email uniqueness
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
         throw new ApiError(409, "Email already in use");
     }
 
-    user.email = email;
-    user.isEmailVerified = false; // recommended
-    await user.save({ validateBeforeSave: false });
+    // 5️⃣ Update email safely (password untouched)
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                email,
+                isEmailVerified: false,
+            },
+        },
+        {
+            new: true,
+            runValidators: false,
+        }
+    ).select("-password");
 
     return res.status(200).json(
-        new ApiResponse(200, { email: user.email }, "Email updated successfully")
+        new ApiResponse(
+            200,
+            { email: updatedUser.email },
+            "Email updated successfully"
+        )
     );
 });
 
@@ -558,28 +600,156 @@ const userEmailUpdate = asyncHandler(async (req, res) => {
 ========================================================= */
 
 const fullNameUpdate = asyncHandler(async (req, res) => {
-    const {fullName} = req.body;
-    if (!fullName){
-        throw new ApiError(400, "Wrong full name");
+    const { fullName } = req.body;
+
+    if (!fullName || fullName.trim().length < 3) {
+        throw new ApiError(400, "Invalid full name");
     }
-    const user = await User.findById(req.user._id);
-    if (!user) {
+
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                fullName: fullName.trim(),
+            },
+        },
+        {
+            new: true,            // return updated document
+            runValidators: false, // ignore schema validations (like password)
+        }
+    ).select("-password");       // exclude password from response
+
+    if (!updatedUser) {
         throw new ApiError(404, "User not found");
     }
-    user.fullName = fullName;
-    await user.save({ validateBeforeSave: false });
 
     return res.status(200).json(
         new ApiResponse(
             200,
-            { username: user.username },
-            "FullName updated successfully"
+            { fullName: updatedUser.fullName },
+            "Full name updated successfully"
         )
     );
-})
+});
+
+
+/* =========================================================
+   USER updateAvatar CONTROLLER
+========================================================= */
+const updateAvatar = asyncHandler(async (req, res) => {
+    // 1️⃣ Check if a file is uploaded
+    if (!req.file) {
+        throw new ApiError(400, "Avatar file is required");
+    }
+
+    // 2️⃣ Validate file type
+    if (!req.file.mimetype.startsWith("image/")) {
+        throw new ApiError(400, "Only image files are allowed");
+    }
+
+    // 3️⃣ Find the current user
+    const userBefore = await User.findById(req.user._id);
+    if (!userBefore) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const oldAvatar = userBefore.avatar;
+
+    // 4️⃣ Process image if needed (optional)
+    // Example: resize & convert to webp using your processImage utility
+    const processedAvatarPath = await processImage({
+        inputPath: req.file.path,
+        width: 256,
+        height: 256,
+    });
+
+    // 5️⃣ Upload new avatar to Cloudinary
+    const uploadedAvatar = await uploadOn(processedAvatarPath);
+
+    if (!uploadedAvatar || !uploadedAvatar.url || !uploadedAvatar.publicId) {
+        throw new ApiError(500, "Error uploading avatar");
+    }
+
+    // 6️⃣ Update user document
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        { avatar: { url: uploadedAvatar.url, publicId: uploadedAvatar.publicId } },
+        { new: true }
+    ).select("-password");
+
+    // 7️⃣ Delete old avatar from Cloudinary
+    if (oldAvatar?.publicId) {
+        await deleteFromCloudinary(oldAvatar.publicId);
+    }
+
+    // 8️⃣ Delete temp uploaded file
+    await fs.promises.unlink(req.file.path);
+    await fs.promises.unlink(processedAvatarPath);
+
+    return res.status(200).json(
+        new ApiResponse(200, { avatar: user.avatar }, "Avatar updated successfully")
+    );
+});
+
+/* =========================================================
+   USER updateCoverImage CONTROLLER
+========================================================= */
+const updateCoverImage = asyncHandler(async (req, res) => {
+    // 1️⃣ If no file uploaded, return current cover image
+    if (!req.file) {
+        return res.status(200).json(
+            new ApiResponse(200, {}, "No cover image uploaded")
+        );
+    }
+
+    // 2️⃣ Validate file type
+    if (!req.file.mimetype.startsWith("image/")) {
+        throw new ApiError(400, "Only image files are allowed");
+    }
+
+    // 3️⃣ Find current user
+    const userBefore = await User.findById(req.user._id);
+    if (!userBefore) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const oldCover = userBefore.coverImage;
+
+    // 4️⃣ Process cover image (optional resizing/conversion)
+    const processedCoverPath = await processImage({
+        inputPath: req.file.path,
+    });
+
+    // 5️⃣ Upload new cover image
+    const uploadedCover = await uploadOn(processedCoverPath);
+
+    if (!uploadedCover || !uploadedCover.url || !uploadedCover.publicId) {
+        throw new ApiError(500, "Error uploading cover image");
+    }
+
+    // 6️⃣ Update user document
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        { coverImage: { url: uploadedCover.url, publicId: uploadedCover.publicId } },
+        { new: true }
+    ).select("-password");
+
+    // 7️⃣ Delete old cover image from Cloudinary
+    if (oldCover?.publicId) {
+        await deleteFromCloudinary(oldCover.publicId);
+    }
+
+    // 8️⃣ Delete temp uploaded file
+    await fs.promises.unlink(req.file.path);
+    await fs.promises.unlink(processedCoverPath);
+
+    return res.status(200).json(
+        new ApiResponse(200, { coverImage: user.coverImage }, "Cover image updated successfully")
+    );
+});
 
 /* =========================================================
    EXPORT CONTROLLERS
 ========================================================= */
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, googleAuthCallback, changePasswordCallback, getCurrentUser, userNameUpdate, userEmailUpdate, fullNameUpdate };
+export { registerUser, loginUser, logoutUser, refreshAccessToken, googleAuthCallback, changePassword, getCurrentUser, userNameUpdate, userEmailUpdate, fullNameUpdate, updateCoverImage, updateAvatar};

@@ -74,6 +74,15 @@ POST   /api/v1/videos            # Upload new video (auth required)
 GET    /api/v1/videos/:videoId   # Get single video
 PUT    /api/v1/videos/:videoId   # Update video (owner only)
 DELETE /api/v1/videos/:videoId   # Delete video (owner only)
+PATCH  /api/v1/users/update-username   # Update username (password required)
+PATCH  /api/v1/users/update-email      # Update email (password required)
+PATCH  /api/v1/users/update-fullname   # Update full name
+
+{
+  "password": "currentPassword123",
+  "username": "new_username"
+}
+
 ```
 
 ### 📊 Query Parameters (Videos)
