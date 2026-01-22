@@ -11,9 +11,10 @@ import { ApiError } from "../utils/ApiError.js";
 
 // User Mongoose model
 import { User } from "../models/user.model.js";
+import { Subscriptions } from "../models/subscriptions.model.js";
 
 // Upload helper for Cloudinary
-import {deleteFromCloudinary, uploadOn} from "../config/cloudinary.service.js";
+import { deleteFromCloudinary, uploadOn } from "../config/cloudinary.service.js";
 
 // Image processing utility (resize, convert to webp)
 import { processImage } from "../utils/imageProcessor.js";
@@ -469,10 +470,10 @@ const changePassword = asyncHandler(async (req, res) => {
    USER getCurrentUser CONTROLLER
 ========================================================= */
 
-const  getCurrentUser = asyncHandler(async (req, res) => {
+const getCurrentUser = asyncHandler(async (req, res) => {
 
     return res
-    .status(200)
+        .status(200)
         .json(200, req.user, "current user fetched successfully")
 
 })
@@ -729,7 +730,7 @@ const updateCoverImage = asyncHandler(async (req, res) => {
 
     // 6️⃣ Update user document
     const user = await User.findByIdAndUpdate(
-        req.user._id,
+        req.user?._id,
         { coverImage: { url: uploadedCover.url, publicId: uploadedCover.publicId } },
         { new: true }
     ).select("-password");
@@ -749,7 +750,119 @@ const updateCoverImage = asyncHandler(async (req, res) => {
 });
 
 /* =========================================================
+   USER getUserProfile CONTROLLER
+========================================================= */
+// Controller to fetch a user's public channel profile
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+
+    // 1️⃣ Extract username from route params
+    const { username } = req.params;
+
+    // 2️⃣ Validate username
+    // If username is missing or only contains spaces, throw an error
+    if (!username?.trim()) {
+        throw new ApiError(400, "Username is required");
+    }
+
+    // 3️⃣ Get logged-in user's ObjectId (if authenticated)
+    // This is needed to check whether the current user is subscribed
+    const userId = req.user
+        ? new mongoose.Types.ObjectId(req.user._id)
+        : null;
+
+    // 4️⃣ Aggregate user data to build channel profile
+    const channel = await User.aggregate([
+
+        // 🔹 STEP 1: Match the channel by username (case-insensitive)
+        {
+            $match: { username: username.toLowerCase() }
+        },
+
+        // 🔹 STEP 2: Find all subscribers of this channel
+        // subscriptions.channel → current user's _id
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+
+        // 🔹 STEP 3: Find all channels this user has subscribed to
+        // subscriptions.subscriber → current user's _id
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+
+        // 🔹 STEP 4: Add computed fields
+        {
+            $addFields: {
+
+                // Total number of subscribers
+                subscribersCount: { $size: "$subscribers" },
+
+                // Total number of channels this user subscribed to
+                channelsSubscribedToCount: { $size: "$subscribedTo" },
+
+                // Check if the logged-in user is subscribed to this channel
+                isSubscribed: {
+                    $cond: {
+                        if: {
+                            $and: [
+                                // User must be logged in
+                                { $ne: [userId, null] },
+
+                                // User's ID exists in subscribers list
+                                { $in: [userId, "$subscribers.subscriber"] }
+                            ]
+                        },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+
+        // 🔹 STEP 5: Return only required public fields
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                avatar: 1,
+                coverImage: 1,
+                subscribersCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1
+            }
+        }
+    ]);
+
+    // 5️⃣ If no channel found, throw 404 error
+    if (!channel.length) {
+        throw new ApiError(404, "Channel not found");
+    }
+
+    // 6️⃣ Send successful response with channel profile
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                channel[0],
+                "Channel fetched successfully"
+            )
+        );
+});
+
+
+/* =========================================================
    EXPORT CONTROLLERS
 ========================================================= */
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, googleAuthCallback, changePassword, getCurrentUser, userNameUpdate, userEmailUpdate, fullNameUpdate, updateCoverImage, updateAvatar};
+export { registerUser, loginUser, getUserChannelProfile, logoutUser, refreshAccessToken, googleAuthCallback, changePassword, getCurrentUser, userNameUpdate, userEmailUpdate, fullNameUpdate, updateCoverImage, updateAvatar };

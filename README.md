@@ -8,13 +8,22 @@ An open-source, scalable **REST API backend** for a video-sharing platform — i
 
 ## ✨ Features
 
-- 🔐 **JWT Authentication** (Access & Refresh Tokens)
-- 📹 **Video Upload & Management**
-- 👤 **User Registration & Login**
-- ☁️ **Cloudinary Integration** for media storage
-- 📄 **Pagination & Aggregation Support**
-- 🌱 **Modern ESM-based Node.js architecture**
-- 🧩 Clean MVC folder structure
+- 🔐 **Authentication**: 
+  - JWT (Access & Refresh Tokens)
+  - Google OAuth 2.0 Integration (Passport.js)
+- 📹 **Media Management**:
+  - Image processing with **Sharp**
+  - Cloudinary integration for cloud storage
+  - File uploads with **Multer**
+- 👤 **User Management**:
+  - Registration, Login, and Logout
+  - Avatar and Cover Image support
+- 📄 **Advanced Database Operations**:
+  - Mongoose Aggregate Paginate v2 for efficient queries
+  - Clean MVC (Model-View-Controller) architecture
+- 🌱 **Modern Tech**:
+  - ESM-based Node.js architecture
+  - Prettier for consistent code formatting
 
 ---
 
@@ -24,109 +33,101 @@ An open-source, scalable **REST API backend** for a video-sharing platform — i
 |-------------|------------|
 | Backend     | Node.js, Express.js |
 | Database    | MongoDB + Mongoose |
-| Auth        | JWT, Cookies |
-| File Upload| Multer |
-| Media       | Cloudinary |
-| Config      | dotenv |
+| Auth        | JWT, Passport.js (Google), Cookies |
+| File Upload | Multer |
+| Image Proc  | Sharp |
+| Media Store | Cloudinary |
+| Formatting  | Prettier |
 
 ---
 
 ## 📂 Project Structure
 
-```
-
+```text
 tubex/
-├── src/
-│ ├── config/ # DB, cloudinary config
-│ ├── controllers/ # Route logic
-│ ├── middlewares/ # Auth, error handlers
-│ ├── models/ # Mongoose schemas
-│ ├── routes/ # API routes
-│ ├── utils/ # Helpers (JWT, asyncHandler)
-│ ├── app.js # Express app
-│ └── server.js # Server entry
-├── .env.example
-├── package.json
-└── README.md
-
+├── bin/                # Server entry point (www)
+├── config/             # DB, Cloudinary, and Passport configs
+├── controllers/        # Request handling logic
+├── middleware/         # Auth, Multer, etc.
+├── models/             # Mongoose schemas
+├── public/             # Static assets
+├── routes/             # API route definitions
+├── utils/              # Helper functions (ApiError, ApiResponse, etc.)
+├── views/              # View templates (Pug)
+├── app.js              # Express app configuration
+├── constants.js        # Global constants
+├── .env.sample         # Template for environment variables
+├── .prettierrc         # Prettier configuration
+├── package.json        # Dependencies and scripts
+└── README.md           # Project documentation
 ```
-
 
 ---
 
-## 🔗 API Endpoints (v1)
+## 🔗 API Endpoints (v1.0)
 
-### 🔐 Authentication
+### 🔐 Authentication (`/api/v1.0/auth`)
 
-```http
-POST   /api/v1/auth/register     # Register new user
-POST   /api/v1/auth/login        # Login user
-POST   /api/v1/auth/logout       # Logout user
-POST   /api/v1/auth/refresh      # Refresh access token
-GET    /api/v1/auth/me           # Get logged-in user
-```
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| POST   | `/register` | Register new user (with Avatar/Cover) | Public |
+| POST   | `/login` | Login user | Public |
+| POST   | `/logout` | Logout user (Clear tokens) | Private |
+| POST   | `/refresh-token` | Refresh Access Token | Public |
+| GET    | `/google` | Google OAuth Login | Public |
+| GET    | `/google/callback` | Google OAuth Callback | Public |
 
-### 📹 Videos
+---
 
-```http
-GET    /api/v1/videos            # Get all published videos (paginated)
-POST   /api/v1/videos            # Upload new video (auth required)
-GET    /api/v1/videos/:videoId   # Get single video
-PUT    /api/v1/videos/:videoId   # Update video (owner only)
-DELETE /api/v1/videos/:videoId   # Delete video (owner only)
-PATCH  /api/v1/users/update-username   # Update username (password required)
-PATCH  /api/v1/users/update-email      # Update email (password required)
-PATCH  /api/v1/users/update-fullname   # Update full name
+## ⚙️ Environment Variables
 
-{
-  "password": "currentPassword123",
-  "username": "new_username"
-}
+Create a `.env` file in the root directory and populate it with the following:
 
-```
+```env
+PORT=8000
+DB_URL=your_mongodb_connection_string
 
-### 📊 Query Parameters (Videos)
+CLIENT_URL=http://localhost:5173
 
-```http
-GET /api/v1/videos?page=1&limit=10&sort=views
-```
-
-| Param | Description     |
-| ----- | --------------- |
-| page  | Page number     |
-| limit | Videos per page |
-| sort  | views / latest  |
-
-
-### ⚙️ Environment Variables
-Create a .env file in the root directory:
-
-```
-PORT=3000
-DB_URL=mongodb+srv://tubeX:<PASSWORD>@tubex.mongodb.net/
-
-CLIENT_URL=http://localhost:3000
-
-JWT_SECRET=your_access_secret
+JWT_SECRET=your_access_token_secret
 ACCESS_TOKEN_EXPIRY=1d
 
-REFRESH_TOKEN_SECRET=your_refresh_secret
-REFRESH_TOKEN_EXPIRY=7d
+REFRESH_TOKEN_SECRET=your_refresh_token_secret
+REFRESH_TOKEN_EXPIRY=10d
 
-CLOUD_NAME=cloudinary_name
-API_KEY=cloudinary_key
-API_SECRET=cloudinary_secret
+CLOUD_NAME=your_cloudinary_name
+API_KEY=your_cloudinary_api_key
+API_SECRET=your_cloudinary_api_secret
 
+LIMIT=16kb
 ```
 
-git clone https://github.com/yourusername/tubex.git
-cd tubex
+---
 
-| Command     | Description                |
-| ----------- | -------------------------- |
-| npm run dev | Development mode (nodemon) |
-| npm start   | Production mode            |
-| npm test    | Run tests                  |
+## 🚀 Getting Started
 
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/shakib5560/tubeX.git
+   cd tubeX
+   ```
 
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
+3. **Configure environment variables**:
+   Modify the `.env` file as shown above.
+
+4. **Run the server**:
+   ```bash
+   # Development mode (requires dotenv/config and ESM support)
+   npm start
+   ```
+
+---
+
+## 📜 License
+
+This project is open-source. Feel free to use and contribute!

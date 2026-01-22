@@ -17,7 +17,7 @@ import {
     logoutUser,
     refreshAccessToken,
     googleAuthCallback,
-    changePasswordCallback
+
 } from "../controllers/user.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { verifyToken } from "../middleware/auth.middleware.js";
