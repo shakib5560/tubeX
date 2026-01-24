@@ -452,6 +452,14 @@ const changePassword = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Password must be at least 8 characters long");
     }
 
+    const strongPassword =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
+    if (!strongPassword.test(newPassword)) {
+        throw new ApiError(400, "Password must be strong");
+    }
+
+
     // (Optional but recommended)
     // Add regex check for strong passwords if needed
 
@@ -473,9 +481,9 @@ const changePassword = asyncHandler(async (req, res) => {
 
 const getCurrentUser = asyncHandler(async (req, res) => {
 
-    return res
-        .status(200)
-        .json(200, req.user, "current user fetched successfully")
+    return res.status(200).json(
+        new ApiResponse(200, req.user, "Current user fetched successfully")
+    );
 
 })
 
@@ -685,8 +693,13 @@ const updateAvatar = asyncHandler(async (req, res) => {
     }
 
     // 8️⃣ Delete temp uploaded file
-    await fs.promises.unlink(req.file.path);
-    await fs.promises.unlink(processedAvatarPath);
+    const safeUnlink = async (path) => {
+        if (!path) return;
+        try { await fs.promises.unlink(path); } catch {}
+    };
+
+    await safeUnlink(req.file.path);
+    await safeUnlink(processedAvatarPath);
 
     return res.status(200).json(
         new ApiResponse(200, { avatar: user.avatar }, "Avatar updated successfully")

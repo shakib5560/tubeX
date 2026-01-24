@@ -16,12 +16,14 @@ import {
     loginUser,
     logoutUser,
     refreshAccessToken,
-    googleAuthCallback,
+    googleAuthCallback, changePassword, userNameUpdate, getCurrentUser, userEmailUpdate, fullNameUpdate, updateAvatar,
+    updateCoverImage, getUserChannelProfile, getWatchHistory,
 
 } from "../controllers/user.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { verifyToken } from "../middleware/auth.middleware.js";
 import passport from "passport";
+import {optionalAuth} from "../middleware/optionalAuth.middleware.js";
 const router = Router();
 
 /**
@@ -86,6 +88,30 @@ router.get(
 
 // change password
 
+router.patch("/me/password", verifyToken, changePassword);
+
+router.get("/me", verifyToken, getCurrentUser);
+
+router.patch("/me/username", verifyToken, userNameUpdate);
+router.patch("/me/email", verifyToken, userEmailUpdate);
+router.patch("/me/full-name", verifyToken, fullNameUpdate);
+
+router.patch(
+    "/me/avatar",
+    verifyToken,
+    upload.single("avatar"),
+    updateAvatar
+);
+
+router.patch(
+    "/me/cover-image",
+    verifyToken,
+    upload.single("coverImage"),
+    updateCoverImage
+);
+
+router.get("/me/watch-history", verifyToken, getWatchHistory);
+router.get("/channel/:username", optionalAuth, getUserChannelProfile);
 
 
 
