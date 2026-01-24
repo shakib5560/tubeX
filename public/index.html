@@ -1,217 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>API Docs</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TubeX API Status</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --pending: #f59e0b;
+        }
 
-    <!-- Tailwind CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--card-bg);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, var(--accent), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .section {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        h2 {
+            border-left: 4px solid var(--accent);
+            padding-left: 1rem;
+            margin-top: 0;
+            color: var(--text-primary);
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .icon {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .completed .icon { color: var(--success); }
+        .pending .icon { color: var(--pending); }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .tech-tag {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        footer {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 4rem;
+            font-size: 0.875rem;
+        }
+    </style>
 </head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TubeX Backend API</h1>
+            <p style="color: var(--text-secondary);">Documentation of how far the project has been completed</p>
+            <span class="status-badge">State: In Development</span>
+        </header>
 
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+        <div class="section">
+            <h2>✅ Completed Features</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">The following modules are fully implemented and ready for integration.</p>
+            
+            <h3 style="color: var(--text-primary); margin-top: 1.5rem;">🔐 Authentication</h3>
+            <ul class="completed">
+                <li><span class="icon">✔</span> User Registration (with Avatar/Cover Upload)</li>
+                <li><span class="icon">✔</span> Secure Login (JWT Access + Refresh Tokens)</li>
+                <li><span class="icon">✔</span> Google OAuth 2.0 Integration</li>
+                <li><span class="icon">✔</span> Secure Logout & Cookie Management</li>
+                <li><span class="icon">✔</span> Password Management (Change Password, Bcrypt Hashing)</li>
+            </ul>
 
-<div class="max-w-5xl mx-auto px-6 py-12">
-
-    <!-- Page Title -->
-    <header class="mb-12">
-        <h1 class="text-5xl font-extrabold tracking-tight">
-            API Documentation
-        </h1>
-        <p class="text-slate-400 mt-3">
-            Base URL: <span class="text-indigo-400">https://api.example.com</span>
-        </p>
-    </header>
-
-    <!-- ================= USERS ================= -->
-    <section class="mb-14">
-        <h2 class="text-3xl font-bold mb-6 border-b border-slate-800 pb-3">
-            Users
-        </h2>
-
-        <!-- GET All Users -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg mb-6">
-
-            <div class="flex items-center gap-4 mb-4">
-                <span class="px-3 py-1 text-sm font-semibold rounded-lg bg-green-500/20 text-green-400">
-                    GET
-                </span>
-                <code class="text-lg text-indigo-400">
-                    /api/v1.0/users
-                </code>
-            </div>
-
-            <p class="text-slate-400 mb-5">
-                Fetch all registered users.
-            </p>
-
-            <div class="mb-3">
-                <span class="text-sm text-slate-400">Status</span>
-                <span class="ml-2 px-2 py-1 text-xs rounded bg-emerald-500/20 text-emerald-400">
-                    200 OK
-                </span>
-            </div>
-
-            <pre class="bg-black/60 border border-slate-800 rounded-xl p-4 text-sm text-green-300 overflow-x-auto">
-{
-  "success": true,
-  "data": [
-    {
-      "id": "64f5e2a1b3f9c9d1a0a1b2c3",
-      "name": "Shakib",
-      "email": "shakib@example.com"
-    }
-  ]
-}
-            </pre>
-        </div>
-    </section>
-
-    <!-- ================= AUTH ================= -->
-    <section class="mb-14">
-        <h2 class="text-3xl font-bold mb-6 border-b border-slate-800 pb-3">
-            Authentication
-        </h2>
-
-        <!-- Register -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg mb-6">
-
-            <div class="flex items-center gap-4 mb-4">
-                <span class="px-3 py-1 text-sm font-semibold rounded-lg bg-blue-500/20 text-blue-400">
-                    POST
-                </span>
-                <code class="text-lg text-indigo-400">
-                    /api/v1.0/auth/register
-                </code>
-            </div>
-
-            <p class="text-slate-400 mb-5">
-                Register a new user. Supports optional avatar and cover image uploads.
-            </p>
-
-            <div class="mb-3">
-                <span class="text-sm text-slate-400">Status</span>
-                <span class="ml-2 px-2 py-1 text-xs rounded bg-emerald-500/20 text-emerald-400">
-                    201 Created
-                </span>
-            </div>
-
-            <pre class="bg-black/60 border border-slate-800 rounded-xl p-4 text-sm text-blue-300 overflow-x-auto">
-{
-  "success": true,
-  "user": {
-    "id": "64f5e2a1b3f9c9d1a0a1b2c3",
-    "username": "shakib",
-    "email": "shakib@example.com",
-    "avatar": "https://res.cloudinary.com/.../avatar.webp",
-    "coverImage": "https://res.cloudinary.com/.../cover.webp"
-  },
-  "tokens": {
-    "accessToken": "jwt_access_token_here",
-    "refreshToken": "jwt_refresh_token_here"
-  }
-}
-            </pre>
+            <h3 style="color: var(--text-primary); margin-top: 1.5rem;">👤 User Profile</h3>
+            <ul class="completed">
+                <li><span class="icon">✔</span> Cloudinary Integration for Media Storage</li>
+                <li><span class="icon">✔</span> Update Account Details (Name, Email, Username)</li>
+                <li><span class="icon">✔</span> Update Avatar & Cover Image</li>
+                <li><span class="icon">✔</span> Public Channel Profile View</li>
+                <li><span class="icon">✔</span> Watch History Retrieval</li>
+            </ul>
         </div>
 
-        <!-- Login -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg mb-6">
-
-            <div class="flex items-center gap-4 mb-4">
-                <span class="px-3 py-1 text-sm font-semibold rounded-lg bg-blue-500/20 text-blue-400">
-                    POST
-                </span>
-                <code class="text-lg text-indigo-400">
-                    /api/v1.0/auth/login
-                </code>
-            </div>
-
-            <p class="text-slate-400 mb-5">
-                Authenticate user and return access & refresh tokens.
-            </p>
-
-            <div class="mb-3">
-                <span class="text-sm text-slate-400">Status</span>
-                <span class="ml-2 px-2 py-1 text-xs rounded bg-emerald-500/20 text-emerald-400">
-                    200 OK
-                </span>
-            </div>
-
-            <pre class="bg-black/60 border border-slate-800 rounded-xl p-4 text-sm text-blue-300 overflow-x-auto">
-{
-  "success": true,
-  "tokens": {
-    "accessToken": "jwt_access_token_here",
-    "refreshToken": "jwt_refresh_token_here"
-  }
-}
-            </pre>
+        <div class="section">
+            <h2>🚧 In Progress / Planned</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Features currently under development or in the roadmap.</p>
+            <ul class="pending">
+                <li><span class="icon">⏳</span> <strong>Video Management</strong> (Upload, Edit, Delete)</li>
+                <li><span class="icon">⏳</span> Video Playback & Streaming</li>
+                <li><span class="icon">⏳</span> Like / Dislike System</li>
+                <li><span class="icon">⏳</span> Comments & Replies</li>
+                <li><span class="icon">⏳</span> Subscription Logic</li>
+                <li><span class="icon">⏳</span> Playlists</li>
+            </ul>
         </div>
 
-        <!-- Logout -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg mb-6">
-
-            <div class="flex items-center gap-4 mb-4">
-                <span class="px-3 py-1 text-sm font-semibold rounded-lg bg-red-500/20 text-red-400">
-                    POST
-                </span>
-                <code class="text-lg text-indigo-400">
-                    /api/v1.0/auth/logout
-                </code>
+        <div class="section">
+            <h2>🛠 Tech Stack</h2>
+            <div class="tech-stack">
+                <span class="tech-tag">Node.js</span>
+                <span class="tech-tag">Express.js</span>
+                <span class="tech-tag">MongoDB</span>
+                <span class="tech-tag">Mongoose</span>
+                <span class="tech-tag">JWT</span>
+                <span class="tech-tag">Passport.js</span>
+                <span class="tech-tag">Cloudinary</span>
+                <span class="tech-tag">Multer</span>
             </div>
-
-            <p class="text-slate-400 mb-5">
-                Logs out the authenticated user and invalidates the refresh token.
-            </p>
-
-            <div class="mb-3">
-                <span class="text-sm text-slate-400">Status</span>
-                <span class="ml-2 px-2 py-1 text-xs rounded bg-emerald-500/20 text-emerald-400">
-                    200 OK
-                </span>
-            </div>
-
-            <pre class="bg-black/60 border border-slate-800 rounded-xl p-4 text-sm text-red-300 overflow-x-auto">
-{
-  "success": true,
-  "message": "User logged out successfully"
-}
-            </pre>
         </div>
-
-        <!-- Refresh Token -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg">
-
-            <div class="flex items-center gap-4 mb-4">
-                <span class="px-3 py-1 text-sm font-semibold rounded-lg bg-yellow-500/20 text-yellow-400">
-                    POST
-                </span>
-                <code class="text-lg text-indigo-400">
-                    /api/v1.0/auth/refresh-token
-                </code>
-            </div>
-
-            <p class="text-slate-400 mb-5">
-                Generate a new access token using a valid refresh token.
-            </p>
-
-            <div class="mb-3">
-                <span class="text-sm text-slate-400">Status</span>
-                <span class="ml-2 px-2 py-1 text-xs rounded bg-emerald-500/20 text-emerald-400">
-                    200 OK
-                </span>
-            </div>
-
-            <pre class="bg-black/60 border border-slate-800 rounded-xl p-4 text-sm text-yellow-300 overflow-x-auto">
-{
-  "success": true,
-  "accessToken": "new_jwt_access_token_here"
-}
-            </pre>
-        </div>
-
-    </section>
-
-</div>
-
+        
+        <footer>
+            &copy; 2026 TubeX Project. All System Operational.
+        </footer>
+    </div>
 </body>
 </html>
