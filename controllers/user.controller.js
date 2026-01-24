@@ -11,7 +11,8 @@ import { ApiError } from "../utils/ApiError.js";
 
 // User Mongoose model
 import { User } from "../models/user.model.js";
-import {Subscription, Subscriptions} from "../models/subscriptions.model.js";
+
+import {Subscription} from "../models/subscriptions.model.js";
 
 // Upload helper for Cloudinary
 import { deleteFromCloudinary, uploadOn } from "../config/cloudinary.service.js";
