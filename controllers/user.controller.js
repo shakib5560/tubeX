@@ -11,7 +11,7 @@ import { ApiError } from "../utils/ApiError.js";
 
 // User Mongoose model
 import { User } from "../models/user.model.js";
-import { Subscriptions } from "../models/subscriptions.model.js";
+import {Subscription, Subscriptions} from "../models/subscriptions.model.js";
 
 // Upload helper for Cloudinary
 import { deleteFromCloudinary, uploadOn } from "../config/cloudinary.service.js";
@@ -31,6 +31,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 // JWT token input
 import jwt from "jsonwebtoken";
 import user from "debug";
+import mongoose from "mongoose";
 
 /* =========================================================
    CONSTANTS
@@ -862,7 +863,81 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 
 
 /* =========================================================
+   USER getWatchHistory CONTROLLER
+========================================================= */
+const getWatchHistory = asyncHandler(async (req, res) => {
+
+    // 1️⃣ Check if user is authenticated
+    // req.user is usually attached by auth middleware
+    if (!req.user?._id) {
+        throw new ApiError(401, "Unauthorized");
+    }
+
+    // 2️⃣ Aggregate user data from User collection
+    // We use aggregation because watchHistory is an array of video ObjectIds
+    const user = await User.aggregate([
+        {
+            // 3️⃣ Match the currently logged-in user by _id
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id),
+            },
+        },
+        {
+            // 4️⃣ Lookup videos based on watchHistory array
+            $lookup: {
+                from: "videos",                 // Target collection
+                localField: "watchHistory",     // Array of video IDs in User
+                foreignField: "_id",            // Match with Video _id
+                as: "watchHistory",             // Output field
+                pipeline: [
+                    {
+                        // 5️⃣ Populate video owner details
+                        $lookup: {
+                            from: "users",      // Owner is also a user
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    // 6️⃣ Select only required owner fields
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1,
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                    {
+                        // 7️⃣ Convert owner array into a single object
+                        // Because a video has only one owner
+                        $addFields: {
+                            owner: { $first: "$owner" },
+                        },
+                    },
+                ],
+            },
+        },
+    ]);
+
+    // 8️⃣ If user not found or aggregation returns empty
+    if (!user.length) {
+        throw new ApiError(404, "User watchHistory not found");
+    }
+
+    // 9️⃣ Send successful response with watch history
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            user[0].watchHistory || [],   // Fallback to empty array
+            "Get watch history successfully"
+        )
+    );
+});
+
+/* =========================================================
    EXPORT CONTROLLERS
 ========================================================= */
 
-export { registerUser, loginUser, getUserChannelProfile, logoutUser, refreshAccessToken, googleAuthCallback, changePassword, getCurrentUser, userNameUpdate, userEmailUpdate, fullNameUpdate, updateCoverImage, updateAvatar };
+export { registerUser, loginUser, getUserChannelProfile, getWatchHistory, logoutUser, refreshAccessToken, googleAuthCallback, changePassword, getCurrentUser, userNameUpdate, userEmailUpdate, fullNameUpdate, updateCoverImage, updateAvatar };
